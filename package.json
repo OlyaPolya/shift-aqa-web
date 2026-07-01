@@ -3,7 +3,9 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
-  "scripts": {},
+  "scripts": {
+    "test": "playwright test"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/OlyaPolya/shift-aqa-web.git"
@@ -11,13 +13,14 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "commonjs",
+  "type": "module",
   "bugs": {
     "url": "https://github.com/OlyaPolya/shift-aqa-web/issues"
   },
   "homepage": "https://github.com/OlyaPolya/shift-aqa-web#readme",
   "devDependencies": {
     "@playwright/test": "^1.61.1",
-    "@types/node": "^26.0.1"
+    "@types/node": "^26.0.1",
+    "typescript": "^6.0.3"
   }
 }
