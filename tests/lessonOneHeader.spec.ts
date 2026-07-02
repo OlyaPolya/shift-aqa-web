@@ -25,7 +25,7 @@ test('Проверка наличия логотипа, ссылки и пере
 })
 
 test('Проверка существования, ссылки и переход по ссылке элемента меню "Главная" (Хедер, desktop)', async ({page}) => {
-  await page.goto('');
+  await page.goto('catalog');
 
   const mainElement = page.getByTestId('header-nav-link-home');
 
