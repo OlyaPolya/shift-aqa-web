@@ -5,26 +5,26 @@
   },
   {
     "name": "Каталог",
-    "url": "/catalog"
+    "url": "catalog"
   },
   {
     "name": "Доставка",
-    "url": "/delivery"
+    "url": "delivery"
   },
   {
     "name": "О нас",
-    "url": "/about"
+    "url": "about"
   },
   {
     "name": "Контакты",
-    "url": "/contacts"
+    "url": "contacts"
   },
   {
     "name": "Обратная связь",
-    "url": "/feedback"
+    "url": "feedback"
   },
   {
     "name": "Корзина",
-    "url": "/cart"
+    "url": "cart"
   }
 ]
