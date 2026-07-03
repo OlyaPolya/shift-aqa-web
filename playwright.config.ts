@@ -18,7 +18,8 @@ export default defineConfig({
   /* Fail the build on CI if you accidentally left test.only in the source code. */
   forbidOnly: !!process.env.CI,
   /* Retry on CI only */
-  retries: process.env.CI ? 2 : 0,
+  retries: 1,
+  snapshotDir: './screenshots/expected',
   /* Opt out of parallel tests on CI. */
   workers: process.env.CI ? 1 : undefined,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
@@ -35,9 +36,39 @@ export default defineConfig({
   /* Configure projects for major browsers */
   projects: [
     {
-      name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
+      // Название проекта для отчётов
+      name: 'Desktop chrome - 1920',
+      // Настройки для этого проекта
+      use: {
+        browserName: 'chromium',         // используем браузер Chromium
+        viewport: { width: 1920, height: 1080 }  // разрешение экрана как у десктопа
+      },
     },
+    // {
+    //   name: 'Tablet chrome - 1024',
+    //   use: {
+    //     browserName: 'chromium',
+    //     viewport: { width: 1024, height: 1080 }    // разрешение планшета
+    //   },
+    // },
+    {
+      name: 'Mobile chrome - 768',
+      use: {
+        browserName: 'chromium',
+        viewport: { width: 768, height: 1080 }     // разрешение мобильного устройства
+      },
+    },
+    {
+      name: 'Mobile chrome - 360',
+      use: {
+        browserName: 'chromium',
+        viewport: { width: 360, height: 1080 }     // разрешение мобильного устройства
+      },
+    },
+    // {
+    //   name: 'Mobile Safari',
+    //   use: { ...devices['iPhone 12'] },     // Эмуляция мобильного девайса iphone 12 safari
+    // }
 
     // {
     //   name: 'firefox',
