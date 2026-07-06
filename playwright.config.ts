@@ -101,6 +101,14 @@ export default defineConfig({
     // },
   ],
 
+  expect: {
+    toHaveScreenshot: {
+      threshold: 0.2, // 0.2% отличий (по умолчанию)
+        maxDiffPixels: 100, // максимум отличий по пикселям
+        maxDiffPixelRatio: 0.02, // 2% отличий от общей площади скриншота
+      }
+  }
+
   /* Run your local dev server before starting the tests */
   // webServer: {
   //   command: 'npm run start',
