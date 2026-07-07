@@ -1,6 +1,8 @@
 import {test, expect} from '@playwright/test';
 import pages from '../data/pages.json' with { type: 'json' };
 
+// думаю, что нужно 404 проверять, но не уверена, каким образом ее правильно поверять. Поэтому 404 просто добавила в json
+
 pages.forEach((testPage: {name: string, url: string}) => {
   test(`Страница ${testPage.name}`, async ({page}) => {
 
