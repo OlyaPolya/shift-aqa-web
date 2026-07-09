@@ -6,6 +6,7 @@ import { RESPONSE_MESSAGES } from '../constants/responseMessages.ts';
 import { mockRoute } from '../helpers/mockRoute.ts';
 import { MOCK_FEEDBACK_SUCCESS_RESPONSE, MOCK_SERVER_ERROR_RESPONSE } from '../constants/mockApiResponses.ts';
 import { createCaptchaResponsePromise, getTestingCaptchaCode } from '../helpers/captcha.ts';
+import { getFeedbackLocator } from '../constants/locators.ts';
 
 test('Отправка формы обратной связи с валидной капчей', async ({ page, request }) => {
   const captchaResponsePromise = createCaptchaResponsePromise(page);
@@ -15,9 +16,10 @@ test('Отправка формы обратной связи с валидно�
   const code = await getTestingCaptchaCode(captchaResponsePromise, request);
 
   await fillAllFields(page, {code});
-  await page.getByTestId('feedback-submit-button').click();
+  const { submitButton, modalMessage } = getFeedbackLocator(page);
 
-  const modalMessage = page.getByTestId('modal-message');
+  await submitButton.click();
+
   await expect.soft(modalMessage).toBeVisible();
   await expect.soft(modalMessage).toContainText(RESPONSE_MESSAGES.feedbackModal.success);
 });
@@ -26,10 +28,10 @@ test('Отправка формы обратной связи с неправи�
   mockRoute(page, {endpoint: API_ENDPOINTS.feedback, status: 200, body: MOCK_FEEDBACK_SUCCESS_RESPONSE});
 
   await page.goto(ROUTES.feedback);
-  await fillAllFields(page);
-  await page.getByTestId('feedback-submit-button').click();
 
-  const modalMessage = page.getByTestId('modal-message');
+  await fillAllFields(page);
+  const { submitButton, modalMessage } = getFeedbackLocator(page);
+  await submitButton.click();
 
   await expect.soft(modalMessage).toBeVisible();
   await expect.soft(modalMessage).toContainText(RESPONSE_MESSAGES.feedbackModal.success);
@@ -41,9 +43,8 @@ test('Проверка 500 ответа в форме обратной связ�
   await page.goto(ROUTES.feedback);
 
   await fillAllFields(page);
-  await page.getByTestId('feedback-submit-button').click();
-
-  const modalMessage = page.getByTestId('modal-message');
+  const { submitButton, modalMessage } = getFeedbackLocator(page);
+  await submitButton.click();
 
   await expect.soft(modalMessage).toBeVisible();
   await expect.soft(modalMessage).toContainText(RESPONSE_MESSAGES.feedbackModal.serverError);
@@ -61,14 +62,13 @@ test('Негативная проверка капчи - <min длины', async
   await page.goto(ROUTES.feedback);
 
   await fillAllFields(page, {code: 'qwe'});
-  await page.getByTestId('feedback-submit-button').click({force: true});
-
-  const captchaErrorSelector = page.getByTestId('feedback-captcha-error')
+  const { submitButton, captchaError, modalMessage } = getFeedbackLocator(page);
+  await submitButton.click({force: true});
 
   expect.soft(requestSent).toBe(false);
-  await expect.soft(captchaErrorSelector).toHaveText('Капча должна содержать 4 символа');
-  await expect.soft(captchaErrorSelector).toBeVisible();
-  await expect.soft(page.getByTestId('modal-message')).not.toBeVisible();
+  await expect.soft(captchaError).toHaveText('Капча должна содержать 4 символа');
+  await expect.soft(captchaError).toBeVisible();
+  await expect.soft(modalMessage).not.toBeVisible();
 });
 
 /*
@@ -85,58 +85,48 @@ Email обязателен для заполнения
 Введите корректный email адрес
 */
 
-test('Кнопка "Отправить" недоступна c пустым полем email', async ({ page, request }) => {
-  const captchaResponsePromise = createCaptchaResponsePromise(page);
+test('Кнопка "Отправить" недоступна c пустым полем email', async ({ page }) => {
+  mockRoute(page, {endpoint: API_ENDPOINTS.feedback, status: 200, body: MOCK_FEEDBACK_SUCCESS_RESPONSE});
 
   await page.goto(ROUTES.feedback);
 
-  const code = await getTestingCaptchaCode(captchaResponsePromise, request);
-  await fillAllFields(page, {code, email: ''});
+  await fillAllFields(page, { email: ''});
+  const { submitButton } = getFeedbackLocator(page);
 
-  await expect.soft(page.getByTestId('feedback-submit-button')).toBeDisabled();
+  await expect.soft(submitButton).toBeDisabled();
 });
 
 
-test('Отображение ошибки при очистке поля email и исчезновение при заполнении поля валидным email', async ({ page, request }) => {
-  const captchaResponsePromise = createCaptchaResponsePromise(page);
-
+test('Отображение ошибки при очистке поля email и исчезновение при заполнении поля валидным email', async ({ page }) => {
   await page.goto(ROUTES.feedback);
 
-  const code = await getTestingCaptchaCode(captchaResponsePromise, request);
-  await fillAllFields(page, {code});
+  await fillAllFields(page);
+  const { submitButton, errorEmail, inputEmail } = getFeedbackLocator(page);
 
-  await page.getByTestId('feedback-input-email').clear(); // очистили поле, воспользовалась https://playwright.help/docs/api/class-locator#locator-clear
-
-  const submitButton = page.getByTestId('feedback-submit-button');
-  const errorEmail = page.getByTestId('feedback-error-email');
+  await inputEmail.clear(); // очистили поле, воспользовалась https://playwright.help/docs/api/class-locator#locator-clear
 
   await expect.soft(submitButton).toBeDisabled();
   await expect.soft(errorEmail).toHaveText('Email обязателен для заполнения');
 
-  await page.getByTestId('feedback-input-email').fill('as@asf.qw')
+  await inputEmail.fill('as@asf.qw')
 
   await expect.soft(submitButton).not.toBeDisabled();
   await expect.soft(errorEmail).toBeHidden();
 });
 
-const invalidEmails = ['йц@йцу.йц', 'asasf.qw', 'as@asfqw', 'as@asf.q', 'as@asf.qwertyu', 'q'];
+const invalidEmails = ['йц@asf.qw', 'asf@asf.дп', 'as@asf,qw', 'as@asf.q', 'as@asf.qwertyu', 'q', 'as@', '@asf.qw', 'asa@.qw', 'as@asf.', 'as@@asf.qw', 'a!s@asf.qw', 'as @asf.qw', 'as@a f.qw', 'as@af.q!w'];
 
 invalidEmails.forEach((invalidEmail) => {
-  test(`Отображение ошибки при вводе невалидного email ${invalidEmail} и исчезновение при исправлении email на валидный`,  async ({ page, request }) => {
-    const captchaResponsePromise = createCaptchaResponsePromise(page);
-
+  test(`Отображение ошибки при вводе невалидного email ${invalidEmail} и исчезновение при исправлении email на валидный`,  async ({ page }) => {
     await page.goto(ROUTES.feedback);
 
-    const code = await getTestingCaptchaCode(captchaResponsePromise, request);
-    await fillAllFields(page, {code, email: invalidEmail});
-
-    const submitButton = page.getByTestId('feedback-submit-button');
-    const errorEmail = page.getByTestId('feedback-error-email');
+    await fillAllFields(page, {email: invalidEmail});
+    const { submitButton, errorEmail, inputEmail } = getFeedbackLocator(page);
 
     await expect.soft(submitButton).toBeDisabled();
     await expect.soft(errorEmail).toHaveText('Введите корректный email адрес');
 
-    await page.getByTestId('feedback-input-email').fill('as@asf.qw')
+    await inputEmail.fill('as@asf.qw')
 
     await expect.soft(submitButton).not.toBeDisabled();
     await expect.soft(errorEmail).toBeHidden();
@@ -146,17 +136,13 @@ invalidEmails.forEach((invalidEmail) => {
 const validEmails = ['as@asf.qw', '14@asf.qw', 'as@asf.qwerty', 'a-s@asf.qw', 'a_s@asf.qw', 'a.s@asf.qw'];
 
 validEmails.forEach((validEmails) => {
-  test(`Проверка валидного email ${validEmails} на соответствие требованиям `,  async ({ page, request }) => {
-    const captchaResponsePromise = createCaptchaResponsePromise(page);
-
+  test(`Проверка валидного email ${validEmails} на соответствие требованиям `,  async ({ page }) => {
     await page.goto(ROUTES.feedback);
 
-    const code = await getTestingCaptchaCode(captchaResponsePromise, request);
-    await fillAllFields(page, {code, email: validEmails});
+    await fillAllFields(page, {email: validEmails});
+    const { submitButton, errorEmail } = getFeedbackLocator(page);
 
-    await expect.soft(page.getByTestId('feedback-submit-button')).not.toBeDisabled();
-    await expect.soft(page.getByTestId('feedback-error-email')).toBeHidden();
+    await expect.soft(submitButton).not.toBeDisabled();
+    await expect.soft(errorEmail).toBeHidden();
   });
 })
-
-
